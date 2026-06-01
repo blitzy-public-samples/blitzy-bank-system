@@ -1,12 +1,10 @@
 # Bank Internal System Corpus
 
-Purpose:
+This corpus combines repositories representing deployment authority,
+runtime identity, secret management, and service relationships.
 
-Evaluate whether authority, permissions,
-identities, credentials, secrets, and
-service dependencies can be reconstructed
-across multiple enterprise systems.
-
+The objective is to analyze how trust, authority, credentials,
+and permissions may propagate across these domains.
 Repositories:
 
 - GitLab
