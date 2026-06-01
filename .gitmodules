@@ -1,3 +1,6 @@
 [submodule "vault"]
 	path = vault
 	url = git@github.com:hashicorp/vault.git
+[submodule "opentelemetry"]
+	path = opentelemetry
+	url = git@github.com:open-telemetry/opentelemetry-collector.git
