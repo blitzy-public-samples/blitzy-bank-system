@@ -4,3 +4,6 @@
 [submodule "opentelemetry"]
 	path = opentelemetry
 	url = git@github.com:open-telemetry/opentelemetry-collector.git
+[submodule "kubernetes"]
+	path = kubernetes
+	url = git@github.com:kubernetes/kubernetes.git
