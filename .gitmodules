@@ -7,6 +7,3 @@
 [submodule "kubernetes"]
 	path = kubernetes
 	url = git@github.com:kubernetes/kubernetes.git
-[submodule "gitlab"]
-	path = gitlab
-	url = https://gitlab.com/gitlab-org/gitlab.git
