@@ -7,7 +7,6 @@ The objective is to analyze how trust, authority, credentials,
 and permissions may propagate across these domains.
 Repositories:
 
-- GitLab
 - Kubernetes
 - Vault
 - OpenTelemetry
