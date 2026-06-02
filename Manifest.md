@@ -1,8 +1,5 @@
 # Manifest
 
-GitLab
-Trust Domain: Deployment Authority
-
 Kubernetes
 Trust Domain: Runtime Identity
 
