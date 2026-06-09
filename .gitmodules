@@ -1,9 +1,9 @@
 [submodule "vault"]
 	path = vault
-	url = git@github.com:hashicorp/vault.git
+	url = https://github.com/blitzy-public-samples/vault.git
 [submodule "opentelemetry"]
 	path = opentelemetry
-	url = git@github.com:open-telemetry/opentelemetry-collector.git
+	url = https://github.com/blitzy-public-samples/opentelemetry-collector.git
 [submodule "kubernetes"]
 	path = kubernetes
-	url = git@github.com:kubernetes/kubernetes.git
+	url = https://github.com/blitzy-public-samples/kubernetes.git
