@@ -118,7 +118,7 @@ Because this is a trust-propagation analysis rather than a product, "requirement
 |----|------------|------------------|-------|
 | **F-003** | The eight-link trust chain (Human → … → Privileged Resource) is reconstructed against evidence | [`docs/docs/TRUST_PROPAGATION_HYPOTHESIS.md:L3-10`] (spine); per-link evidence in §4.2 | Documented Assumption (spine) / Directly Observed (links) |
 | **F-005** | Vault issues credentials via authentication methods | [`vault/builtin/credential/`], [`vault/command/agentproxyshared/auth/auth.go:L28-34`] | Directly Observed |
-| **F-006** | Vault generates leased, renewable, revocable dynamic secrets via secret engines | [`vault/builtin/logical/`], [`vault/builtin/logical/database/path_creds_create.go:L225`] | Directly Observed |
+| **F-006** | Vault's database secret engine returns a lease-bearing dynamic credential carrying TTL/MaxTTL and revocation-statement metadata (broader cross-engine renew/revoke generality is not asserted as directly observed) | [`vault/builtin/logical/database/path_creds_create.go:L225`] (lease-bearing response), [`vault/builtin/logical/database/path_creds_create.go:L226-227`] (TTL/MaxTTL), [`vault/builtin/logical/database/path_creds_create.go:L218-223`] (revocation_statements metadata) | Directly Observed (database engine); cross-engine renew/revoke generality [Inferred] |
 | **F-010** | Workload → Identity: Kubernetes service-account and node identity provenance | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-56`], [`kubernetes/pkg/auth/nodeidentifier/default.go:L37-64`] | Directly Observed |
 | **F-015** | Kubernetes embeds audit provenance (issued-credential-id, pod/node) in identity establishment | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38-50`] | Directly Observed |
 
@@ -126,13 +126,13 @@ Because this is a trust-propagation analysis rather than a product, "requirement
 
 | ID | Capability | Primary Evidence | Class |
 |----|------------|------------------|-------|
-| **F-007** | Identity → Secret seam: Vault Agent consumes a Kubernetes service-account token to log in | [`vault/command/agentproxyshared/helpers.go:L25`], [`...helpers.go:L56-57`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L21`], [`...kubernetes.go:L80-87`] | Directly Observed |
-| **F-008** | The same SA JWT serves a dual trust role: Vault login credential **and** boltdb persistent-cache AAD | [`vault/command/agentproxyshared/helpers.go:L97-102`], [`...helpers.go:L146`], [`...helpers.go:L208`], [`...helpers.go:L229-240`] | Directly Observed (paths) / Inferred (dual-role significance) |
-| **F-009** | Vault → Kubernetes (reverse seam): operational state surfaced into pod labels | [`vault/serviceregistration/kubernetes/service_registration.go:L19-26`], [`...service_registration.go:L73-103`] | Directly Observed |
+| **F-007** | Identity → Secret seam: Vault Agent consumes a Kubernetes service-account token to log in | [`vault/command/agentproxyshared/helpers.go:L25`], [`vault/command/agentproxyshared/helpers.go:L56-57`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L21`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
+| **F-008** | The same SA JWT serves a dual trust role: Vault login credential **and** boltdb persistent-cache AAD | [`vault/command/agentproxyshared/helpers.go:L97-102`], [`vault/command/agentproxyshared/helpers.go:L146`], [`vault/command/agentproxyshared/helpers.go:L208`], [`vault/command/agentproxyshared/helpers.go:L229-240`] | Directly Observed (paths) / Inferred (dual-role significance) |
+| **F-009** | Vault → Kubernetes (reverse seam): operational state surfaced into pod labels | [`vault/serviceregistration/kubernetes/service_registration.go:L19-26`], [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] | Directly Observed |
 | **F-011** | Kubernetes RBAC renders allow decisions; default privileged bindings ship with the addon set | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`], [`kubernetes/cluster/addons/rbac/`] | Directly Observed |
 | **F-012** | OpenTelemetry authenticator extension authenticates incoming and outgoing telemetry | [`opentelemetry/extension/extensionauth/doc.go:L4-6`], [`opentelemetry/config/configauth/configauth.go:L26-69`] | Directly Observed |
 | **F-013** | Telemetry transport trust is configured via TLS/opaque/gRPC/HTTP config packages | [`opentelemetry/config/configtls`], [`opentelemetry/config/configopaque`], [`opentelemetry/config/configgrpc`], [`opentelemetry/config/confighttp`] | Directly Observed |
-| **F-014** | Vault audit pipeline logs request/response events through a broker to file/socket/syslog sinks | [`vault/audit/broker.go:L255`], [`...broker.go:L322`], [`vault/audit/backend_file.go`], [`vault/audit/backend_socket.go`], [`vault/audit/backend_syslog.go`] | Directly Observed |
+| **F-014** | Vault audit pipeline logs request/response events through a broker to file/socket/syslog sinks | [`vault/audit/broker.go:L255`], [`vault/audit/broker.go:L322`], [`vault/audit/backend_file.go`], [`vault/audit/backend_socket.go`], [`vault/audit/backend_syslog.go`] | Directly Observed |
 | **F-016** | CI / image provenance: container build + cosign signing exist as build-time artifacts | [`vault/Dockerfile`], [`opentelemetry/.github/workflows/builder-snapshot.yaml:L39`] | Directly Observed |
 
 ### 2.5 Traceability Matrix
@@ -141,21 +141,21 @@ Each finding resolves to the evidence below. "Seam" links to the per-seam catalo
 
 | ID | Resolves in | Seam / Flow | Evidence anchor | Class |
 |----|-------------|-------------|-----------------|-------|
-| F-001 | §1.2, §5.1 | — | [`Manifest.md:L3-4`]; [`.../serviceaccount/util.go:L29-56`] | Directly Observed |
+| F-001 | §1.2, §5.1 | — | [`Manifest.md:L3-4`]; [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-56`] | Directly Observed |
 | F-002 | §1.2, §6.2 | — | [`Manifest.md:L6-7`]; [`vault/builtin/credential/`]; [`vault/builtin/logical/`] | Directly Observed |
 | F-003 | §4.2 | Spine | [`docs/docs/TRUST_PROPAGATION_HYPOTHESIS.md:L3-10`] | Documented Assumption / Directly Observed |
-| F-004 | §1.2, §5.2 | — | [`Manifest.md:L9-10`]; [`.../extensionauth/doc.go:L4-6`] | Directly Observed |
-| F-005 | §4.3, §6.2 | — | [`vault/builtin/credential/`]; [`.../auth/auth.go:L28-34`] | Directly Observed |
-| F-006 | §6.2 | — | [`vault/builtin/logical/`]; [`.../database/path_creds_create.go:L225`] | Directly Observed |
-| F-007 | §4.4, §6.4 | Seam S1 | [`.../helpers.go:L56-57`]; [`.../auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
-| F-008 | §4.4, §6.4 | Seam S1 | [`.../helpers.go:L97-102`], [`.../helpers.go:L146`], [`.../helpers.go:L229-240`] | Directly Observed / Inferred |
-| F-009 | §4.6, §6.4 | Seam S5 | [`.../service_registration.go:L19-26`], [`.../service_registration.go:L73-103`] | Directly Observed |
-| F-010 | §4.7, §6.4 | Seam S2 | [`.../serviceaccount/util.go:L29-56`]; [`.../nodeidentifier/default.go:L37-64`] | Directly Observed |
-| F-011 | §4.7, §6.4 | Seam S3 | [`.../rbac/rbac.go:L78-83`]; [`kubernetes/cluster/addons/rbac/`] | Directly Observed |
-| F-012 | §4.4, §6.3 | Seam S4 | [`.../extensionauth/doc.go:L4-6`]; [`.../configauth/configauth.go:L26-69`] | Directly Observed |
-| F-013 | §6.3 | Seam S4 | [`.../config/configtls`]; [`.../config/configgrpc`]; [`.../config/confighttp`] | Directly Observed |
-| F-014 | §6.5 | — | [`vault/audit/broker.go:L255`], [`.../broker.go:L322`]; transports in [`vault/audit/`] | Directly Observed |
-| F-015 | §4.7, §6.5 | Seam S2 | [`.../serviceaccount/util.go:L38-50`] | Directly Observed |
+| F-004 | §1.2, §5.2 | — | [`Manifest.md:L9-10`]; [`opentelemetry/extension/extensionauth/doc.go:L4-6`] | Directly Observed |
+| F-005 | §4.3, §6.2 | — | [`vault/builtin/credential/`]; [`vault/command/agentproxyshared/auth/auth.go:L28-34`] | Directly Observed |
+| F-006 | §6.2 | — | [`vault/builtin/logical/`]; [`vault/builtin/logical/database/path_creds_create.go:L225`] | Directly Observed |
+| F-007 | §4.4, §6.4 | Seam S1 | [`vault/command/agentproxyshared/helpers.go:L56-57`]; [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
+| F-008 | §4.4, §6.4 | Seam S1 | [`vault/command/agentproxyshared/helpers.go:L97-102`], [`vault/command/agentproxyshared/helpers.go:L146`], [`vault/command/agentproxyshared/helpers.go:L229-240`] | Directly Observed / Inferred |
+| F-009 | §4.6, §6.4 | Seam S5 | [`vault/serviceregistration/kubernetes/service_registration.go:L19-26`], [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] | Directly Observed |
+| F-010 | §4.7, §6.4 | Seam S2 | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-56`]; [`kubernetes/pkg/auth/nodeidentifier/default.go:L37-64`] | Directly Observed |
+| F-011 | §4.7, §6.4 | Seam S3 | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`]; [`kubernetes/cluster/addons/rbac/`] | Directly Observed |
+| F-012 | §4.4, §6.3 | Seam S4 | [`opentelemetry/extension/extensionauth/doc.go:L4-6`]; [`opentelemetry/config/configauth/configauth.go:L26-69`] | Directly Observed |
+| F-013 | §6.3 | Seam S4 | [`opentelemetry/config/configtls`]; [`opentelemetry/config/configgrpc`]; [`opentelemetry/config/confighttp`] | Directly Observed |
+| F-014 | §6.5 | — | [`vault/audit/broker.go:L255`], [`vault/audit/broker.go:L322`]; transports in [`vault/audit/`] | Directly Observed |
+| F-015 | §4.7, §6.5 | Seam S2 | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38-50`] | Directly Observed |
 | F-016 | §8 | — | [`vault/Dockerfile`]; [`opentelemetry/.github/workflows/builder-snapshot.yaml:L39`] | Directly Observed |
 
 ---
@@ -196,16 +196,16 @@ This specification is authored in CommonMark / GitHub-Flavored Markdown with emb
 
 Synthesizing §3.1–§3.5, the trust-relevant technology surface of the mesh is **[Inferred]**:
 
-| Trust function | Bearing technology | Domain | Anchor |
-|----------------|--------------------|--------|--------|
-| Workload/node identity minting & naming | Go constants + identity helpers | Kubernetes | [`.../serviceaccount/util.go:L29-56`], [`.../nodeidentifier/default.go:L37-64`] |
-| Authorization decision | RBAC authorizer (Go) | Kubernetes | [`.../rbac/rbac.go:L78-83`] |
-| Identity-for-secret exchange | Vault Agent auto-auth (Go) | Vault (consumes K8s) | [`.../helpers.go:L56-57`], [`.../auth/kubernetes/kubernetes.go:L80-87`] |
-| Secret generation/lease/renew/revoke | Secret engines (Go) | Vault | [`vault/builtin/logical/`] |
-| Operational-state surfacing | Service registration PATCH (Go) | Vault → Kubernetes | [`.../service_registration.go:L73-103`] |
-| Telemetry authentication (both directions) | `extensionauth` + `configauth` (Go) | OpenTelemetry | [`.../extensionauth/doc.go:L4-6`], [`.../configauth.go:L26-69`] |
-| Credential-event visibility | Audit broker + sinks (Go) | Vault | [`vault/audit/broker.go:L255`] |
-| Provenance / supply chain | Dockerfile + cosign workflow | Vault, OpenTelemetry | [`vault/Dockerfile`], [`.../builder-snapshot.yaml:L39`] |
+| Trust function | Bearing technology | Domain | Anchor | Class |
+|----------------|--------------------|--------|--------|-------|
+| Workload/node identity minting & naming | Go constants + identity helpers | Kubernetes | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-56`], [`kubernetes/pkg/auth/nodeidentifier/default.go:L37-64`] | Directly Observed |
+| Authorization decision | RBAC authorizer (Go) | Kubernetes | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`] | Directly Observed |
+| Identity-for-secret exchange | Vault Agent auto-auth (Go) | Vault (consumes K8s) | [`vault/command/agentproxyshared/helpers.go:L56-57`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
+| Secret generation/lease/renew/revoke | Secret engines (Go) | Vault | [`vault/builtin/logical/`] | Directly Observed (engine packages present); cross-engine renew/revoke generality [Inferred] |
+| Operational-state surfacing | Service registration PATCH (Go) | Vault → Kubernetes | [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] | Directly Observed |
+| Telemetry authentication (both directions) | `extensionauth` + `configauth` (Go) | OpenTelemetry | [`opentelemetry/extension/extensionauth/doc.go:L4-6`], [`opentelemetry/config/configauth/configauth.go:L26-69`] | Directly Observed |
+| Credential-event visibility | Audit broker + sinks (Go) | Vault | [`vault/audit/broker.go:L255`] | Directly Observed |
+| Provenance / supply chain | Dockerfile + cosign workflow | Vault, OpenTelemetry | [`vault/Dockerfile`], [`opentelemetry/.github/workflows/builder-snapshot.yaml:L39`] | Directly Observed |
 
 ---
 
@@ -237,11 +237,11 @@ Each link reconstructed against corpus evidence:
 | **Human** | No corpus artifact binds a human actor into the runtime chain. The link is asserted only by the hypothesis note. | [`docs/docs/TRUST_PROPAGATION_HYPOTHESIS.md:L3`] | Documented Assumption |
 | **Pipeline** | Build pipelines exist as CI workflows and a container build; binding them to the *runtime* trust chain is not evidenced (they are build-time). | [`opentelemetry/.github/workflows/builder-snapshot.yaml:L39`], [`vault/Dockerfile`] | Directly Observed (pipelines exist) / Documented Assumption (runtime binding) |
 | **Workload** | A workload's identity material is the mounted service-account token at the default path `/var/run/secrets/kubernetes.io/serviceaccount/token`. | [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L21`] | Directly Observed |
-| **Identity** | Kubernetes names the identity `system:serviceaccount:<ns>:<name>` (workloads) or `system:node:<name>` + group `system:nodes` (nodes). | [`.../serviceaccount/util.go:L29`,`L55-56`], [`.../nodeidentifier/default.go:L37`], [`.../user/user.go:L72`] | Directly Observed |
-| **Secret** | Vault exchanges the identity (SA JWT) for a Vault token via the Agent's kubernetes auth method, and engines mint dynamic secrets. | [`.../helpers.go:L56-57`], [`.../auth/kubernetes/kubernetes.go:L80-87`], [`vault/builtin/logical/`] | Directly Observed |
-| **Service** | The credential-bearing service authenticates telemetry on incoming requests via the authenticator extension. | [`.../extensionauth/doc.go:L4-6`], [`.../configauth.go:L35`] | Directly Observed |
-| **Downstream Service** | An exporter adds authentication on outgoing requests to a downstream collector/backend. | [`.../extensionauth/doc.go:L4-6`], [`.../configauth.go:L62`] | Directly Observed |
-| **Privileged Resource** | The privileged target is reached once a dynamic secret (e.g., DB credentials) is consumed or RBAC allows the action. | [`.../database/path_creds_create.go:L225`], [`.../rbac/rbac.go:L83`] | Directly Observed |
+| **Identity** | Kubernetes names the identity `system:serviceaccount:<ns>:<name>` (workloads) or `system:node:<name>` + group `system:nodes` (nodes). | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29`,`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`], [`kubernetes/pkg/auth/nodeidentifier/default.go:L37`], [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/user/user.go:L72`] | Directly Observed |
+| **Secret** | Vault exchanges the identity (SA JWT) for a Vault token via the Agent's kubernetes auth method, and engines mint dynamic secrets. | [`vault/command/agentproxyshared/helpers.go:L56-57`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`], [`vault/builtin/logical/`] | Directly Observed |
+| **Service** | The credential-bearing service authenticates telemetry on incoming requests via the authenticator extension. | [`opentelemetry/extension/extensionauth/doc.go:L4-6`], [`opentelemetry/config/configauth/configauth.go:L35`] | Directly Observed |
+| **Downstream Service** | An exporter adds authentication on outgoing requests to a downstream collector/backend. | [`opentelemetry/extension/extensionauth/doc.go:L4-6`], [`opentelemetry/config/configauth/configauth.go:L62`] | Directly Observed |
+| **Privileged Resource** | The privileged target is reached once a dynamic secret (e.g., DB credentials) is consumed or RBAC allows the action. | [`vault/builtin/logical/database/path_creds_create.go:L225`], [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L83`] | Directly Observed |
 
 **Synthesis [Inferred].** Links *Workload → Identity → Secret* form a continuous, directly observed mechanism within and across the Kubernetes→Vault boundary. Links *Service → Downstream Service* are continuous within OpenTelemetry. The *Human* and *Pipeline* links are not bound to the runtime by any corpus artifact and remain Documented Assumptions; treating the full eight-link chain as one runtime path is therefore an analytical assembly, not an observed deployment.
 
@@ -280,9 +280,9 @@ sequenceDiagram
     Note over Agent: token used for downstream Vault API calls
 ```
 
-Sequence anchors: `readJWT()` at [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80`]; the `"jwt"` login payload at [`...kubernetes.go:L87`]; method construction at [`vault/command/agentproxyshared/helpers.go:L56-57`] **[Directly Observed]**.
+Sequence anchors: `readJWT()` at [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80`]; the `"jwt"` login payload at [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L87`]; method construction at [`vault/command/agentproxyshared/helpers.go:L56-57`] **[Directly Observed]**.
 
-**Dual-use finding (F-008).** The *same* default token path is read by a *second*, independent code path: when the Agent's persistent cache is `type: "kubernetes"`, `getServiceAccountJWT(...)` reads the SA token and uses it as **AAD** (additional authenticated data) to bind the boltdb persistent cache's encryption [`vault/command/agentproxyshared/helpers.go:L97-102`], [`...helpers.go:L146`], [`...helpers.go:L208`], [`...helpers.go:L229-240`] **[Directly Observed]**. Thus one Kubernetes-issued artifact carries two distinct trust functions — a *login credential* and a *cache-encryption parameter* — a non-obvious coupling analyzed for liability in §6.4 **[Inferred]**.
+**Dual-use finding (F-008).** The *same* default token path is read by a *second*, independent code path: when the Agent's persistent cache is `type: "kubernetes"`, `getServiceAccountJWT(...)` reads the SA token and uses it as **AAD** (additional authenticated data) to bind the boltdb persistent cache's encryption [`vault/command/agentproxyshared/helpers.go:L97-102`], [`vault/command/agentproxyshared/helpers.go:L146`], [`vault/command/agentproxyshared/helpers.go:L208`], [`vault/command/agentproxyshared/helpers.go:L229-240`] **[Directly Observed]**. Thus one Kubernetes-issued artifact carries two distinct trust functions — a *login credential* and a *cache-encryption parameter* — a non-obvious coupling analyzed for liability in §6.4 **[Inferred]**.
 
 #### 4.4.2 Service ↔ Downstream Service (OpenTelemetry authenticated telemetry)
 
@@ -301,7 +301,7 @@ sequenceDiagram
     Exp->>Down: outgoing telemetry + added credentials
 ```
 
-Resolution anchors: `GetServerAuthenticator` → `extensionauth.Server` at [`opentelemetry/config/configauth/configauth.go:L35`]; `GetHTTPClientAuthenticator` → `extensionauth.HTTPClient` at [`...configauth.go:L49`]; `GetGRPCClientAuthenticator` → `extensionauth.GRPCClient` at [`...configauth.go:L62`]; the authenticator is named by `AuthenticatorID component.ID` (`mapstructure:"authenticator,omitempty"`) at [`...configauth.go:L26-28`] **[Directly Observed]**.
+Resolution anchors: `GetServerAuthenticator` → `extensionauth.Server` at [`opentelemetry/config/configauth/configauth.go:L35`]; `GetHTTPClientAuthenticator` → `extensionauth.HTTPClient` at [`opentelemetry/config/configauth/configauth.go:L49`]; `GetGRPCClientAuthenticator` → `extensionauth.GRPCClient` at [`opentelemetry/config/configauth/configauth.go:L62`]; the authenticator is named by `AuthenticatorID component.ID` (`mapstructure:"authenticator,omitempty"`) at [`opentelemetry/config/configauth/configauth.go:L26-28`] **[Directly Observed]**.
 
 ### 4.6 Vault → Kubernetes State Surfacing (reverse-direction seam)
 
@@ -312,7 +312,7 @@ In the reverse direction, Vault writes its own operational state **into** Kubern
 pathToLabels = "/metadata/labels/"
 ```
 
-The five state labels are `vault-version`, `vault-active`, `vault-sealed`, `vault-perf-standby`, and `vault-initialized` [`vault/serviceregistration/kubernetes/service_registration.go:L19-23`] **[Directly Observed]**. Four `Notify*` methods PATCH the corresponding label when state changes: `NotifyActiveStateChange` [`...service_registration.go:L73`], `NotifySealedStateChange` [`...service_registration.go:L82`], `NotifyPerformanceStandbyStateChange` [`...service_registration.go:L91`], and `NotifyInitializedStateChange` [`...service_registration.go:L100`] **[Directly Observed]**. A retry handler provides resilience for these updates, exposing `Run` [`vault/serviceregistration/kubernetes/retry_handler.go:L48`], `Notify` [`...retry_handler.go:L110`], and `updateState` [`...retry_handler.go:L224`] **[Directly Observed]**.
+The five state labels are `vault-version`, `vault-active`, `vault-sealed`, `vault-perf-standby`, and `vault-initialized` [`vault/serviceregistration/kubernetes/service_registration.go:L19-23`] **[Directly Observed]**. Four `Notify*` methods PATCH the corresponding label when state changes: `NotifyActiveStateChange` [`vault/serviceregistration/kubernetes/service_registration.go:L73`], `NotifySealedStateChange` [`vault/serviceregistration/kubernetes/service_registration.go:L82`], `NotifyPerformanceStandbyStateChange` [`vault/serviceregistration/kubernetes/service_registration.go:L91`], and `NotifyInitializedStateChange` [`vault/serviceregistration/kubernetes/service_registration.go:L100`] **[Directly Observed]**. A retry handler provides resilience for these updates, exposing `Run` [`vault/serviceregistration/kubernetes/retry_handler.go:L48`], `Notify` [`vault/serviceregistration/kubernetes/retry_handler.go:L110`], and `updateState` [`vault/serviceregistration/kubernetes/retry_handler.go:L224`] **[Directly Observed]**.
 
 ```mermaid
 stateDiagram-v2
@@ -334,7 +334,7 @@ Two Kubernetes gates govern whether an identity is recognized and then authorize
 
 **Node-identity gate.** `NodeIdentity(u)` returns `isNode=true` **only if** the user's groups contain `system:nodes` **and** the username has the prefix `system:node:`; it then extracts the node name by trimming that prefix [`kubernetes/pkg/auth/nodeidentifier/default.go:L42-64`] **[Directly Observed]**. The group constant `NodesGroup = "system:nodes"` is defined in the user package [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/user/user.go:L72`] **[Directly Observed]**; the username prefix `nodeUserNamePrefix = "system:node:"` is local to the identifier [`kubernetes/pkg/auth/nodeidentifier/default.go:L37`] **[Directly Observed]**. Both conditions are required — a matching name without the group, or the group without the matching name, does not yield node identity **[Directly Observed]**.
 
-**Authorization gate.** `RBACAuthorizer.Authorize(...)` visits applicable rules via `VisitRulesFor(...)` and, on a match, returns `authorizer.DecisionAllow` with the reason string `"RBAC: allowed by <source>"` [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`], [`...rbac.go:L69`] **[Directly Observed]**. The core predicate is `RuleAllows(...)` [`...rbac.go:L191`] **[Directly Observed]**. RBAC is allow-on-match: absence of a matching allow rule does not produce an allow decision **[Directly Observed]**.
+**Authorization gate.** `RBACAuthorizer.Authorize(...)` visits applicable rules via `VisitRulesFor(...)` and, on a match, returns `authorizer.DecisionAllow` with the reason string `"RBAC: allowed by <source>"` [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`], [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L69`] **[Directly Observed]**. The core predicate is `RuleAllows(...)` [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L191`] **[Directly Observed]**. RBAC is allow-on-match: absence of a matching allow rule does not produce an allow decision **[Directly Observed]**.
 
 ```mermaid
 flowchart TD
@@ -388,7 +388,7 @@ flowchart TB
         AGENT[Vault Agent Auto-Auth]
         ENGINES[Secret Engines]
     end
-    subgraph OTEL[OpenTelemetry - Service Relationship Authority]
+    subgraph OTEL[OpenTelemetry - Service Relationship & Telemetry Authority]
         AUTHEXT[extensionauth client/server]
     end
     SA -- SA JWT token --> AGENT
@@ -401,11 +401,11 @@ Component responsibilities and their evidence anchors:
 
 | Component | Responsibility | Anchor | Class |
 |-----------|----------------|--------|-------|
-| ServiceAccount Identity (K8s) | Mint/name workload identities | [`.../serviceaccount/util.go:L29-56`] | Directly Observed |
-| RBAC Authorizer (K8s) | Render allow decisions | [`.../rbac/rbac.go:L78-83`] | Directly Observed |
-| Vault Agent Auto-Auth (Vault) | Exchange identity for a Vault token | [`.../helpers.go:L56-57`], [`.../auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
+| ServiceAccount Identity (K8s) | Mint/name workload identities | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-56`] | Directly Observed |
+| RBAC Authorizer (K8s) | Render allow decisions | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78-83`] | Directly Observed |
+| Vault Agent Auto-Auth (Vault) | Exchange identity for a Vault token | [`vault/command/agentproxyshared/helpers.go:L56-57`], [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`] | Directly Observed |
 | Secret Engines (Vault) | Generate/lease dynamic secrets | [`vault/builtin/logical/`] | Directly Observed |
-| `extensionauth` (OTel) | Authenticate telemetry both directions | [`.../extensionauth/doc.go:L4-6`] | Directly Observed |
+| `extensionauth` (OTel) | Authenticate telemetry both directions | [`opentelemetry/extension/extensionauth/doc.go:L4-6`] | Directly Observed |
 
 The edges are the seams catalogued in §6.4: `SA → AGENT` (S1/S2), `AGENT → ENGINES` (internal to Vault but on the secret-issuance path), `VAULT → K8S` pod labels (S5), and the `AUTHEXT ↔ AUTHEXT` self-edge denoting that one Collector authenticates both as a server (incoming) and as a client (outgoing) (S4) **[Inferred]** from the bidirectional package doc.
 
@@ -425,15 +425,15 @@ This graph is the service-relationship view of the trust chain's *Service → Do
 
 ### 5.3 Technical Decisions (observed)
 
-- **Identity is string-named, prefix-encoded.** Kubernetes encodes identity class directly in the username/group string (`system:serviceaccount:`, `system:node:`, `system:nodes`), making identity-class checks simple prefix/membership tests [`.../serviceaccount/util.go:L29-32`], [`.../nodeidentifier/default.go:L37`] **[Directly Observed]**.
-- **Authentication is pluggable by string key.** Both Vault's auto-auth (`switch` over method type) [`.../helpers.go:L38-71`] and OpenTelemetry's authenticator (extension selected by `component.ID`) [`.../configauth.go:L28`] resolve trust providers by a configured identifier **[Directly Observed]**.
-- **State is surfaced by data write, not API call.** Vault reflects state into Kubernetes by PATCHing pod-label paths rather than invoking a Kubernetes control API for the same purpose [`.../service_registration.go:L73-103`] **[Directly Observed]**.
+- **Identity is string-named, prefix-encoded.** Kubernetes encodes identity class directly in the username/group string (`system:serviceaccount:`, `system:node:`, `system:nodes`), making identity-class checks simple prefix/membership tests [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-32`], [`kubernetes/pkg/auth/nodeidentifier/default.go:L37`] **[Directly Observed]**.
+- **Authentication is pluggable by string key.** Both Vault's auto-auth (`switch` over method type) [`vault/command/agentproxyshared/helpers.go:L38-71`] and OpenTelemetry's authenticator (extension selected by `component.ID`) [`opentelemetry/config/configauth/configauth.go:L28`] resolve trust providers by a configured identifier **[Directly Observed]**.
+- **State is surfaced by data write, not API call.** Vault reflects state into Kubernetes by PATCHing pod-label paths rather than invoking a Kubernetes control API for the same purpose [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] **[Directly Observed]**.
 
 ### 5.4 Cross-Cutting Concerns
 
 - **Resilience.** The Vault→K8s state surfacing is wrapped in a retry handler [`vault/serviceregistration/kubernetes/retry_handler.go:L48-224`] **[Directly Observed]**, indicating the label writes are treated as best-effort/retriable rather than strongly consistent **[Inferred]**.
-- **Encryption-at-rest for caches.** The Agent's persistent lease cache is encrypted with a key manager and bound by AAD derived from the SA token [`.../helpers.go:L146`,`L208`] **[Directly Observed]**.
-- **Audit.** Vault routes audit events through a broker to pluggable sinks (§6.5) [`vault/audit/broker.go:L255`,`L322`] **[Directly Observed]**.
+- **Encryption-at-rest for caches.** The Agent's persistent lease cache is encrypted with a key manager and bound by AAD derived from the SA token [`vault/command/agentproxyshared/helpers.go:L146`,`vault/command/agentproxyshared/helpers.go:L208`] **[Directly Observed]**.
+- **Audit.** Vault routes audit events through a broker to pluggable sinks (§6.5) [`vault/audit/broker.go:L255`,`vault/audit/broker.go:L322`] **[Directly Observed]**.
 
 ---
 
@@ -449,7 +449,7 @@ Vault is the Secrets & Credentials Authority [`Manifest.md:L6-7`] **[Directly Ob
 
 - **Generation.** Secret engines mint secrets on demand. The database engine's create path returns a lease-bearing secret via `b.Secret(SecretCredsType).Response(respData, internal)` [`vault/builtin/logical/database/path_creds_create.go:L225`] **[Directly Observed]**. The full engine set is aws, consul, database, nomad, pki, pkiext, rabbitmq, ssh, totp, transit [`vault/builtin/logical/`] **[Directly Observed]**.
 - **Distribution.** A dynamic secret is returned to the caller that authenticated to Vault — in the mesh, the Vault Agent that exchanged the SA JWT for a token (§4.4) **[Inferred]** from the auth-then-read sequence.
-- **Storage (agent-side).** When persistent caching is enabled, leased secrets are cached in an encrypted boltdb file whose encryption is bound by AAD derived from the SA token [`vault/command/agentproxyshared/helpers.go:L146`,`L208`] **[Directly Observed]**.
+- **Storage (agent-side).** When persistent caching is enabled, leased secrets are cached in an encrypted boltdb file whose encryption is bound by AAD derived from the SA token [`vault/command/agentproxyshared/helpers.go:L146`,`vault/command/agentproxyshared/helpers.go:L208`] **[Directly Observed]**.
 - **Renewal/Revocation.** The PKI engine exposes revocation surfaces (e.g., `path_acme_revoke.go`, `crl_util.go`, `path_config_crl.go`) [`vault/builtin/logical/pki/`] **[Directly Observed]**. Broader lease renewal/revocation is part of Vault's lease model and is **[Inferred]** beyond the specific cited paths.
 
 > **Boundary note.** This specification does not enumerate every engine's renew/revoke handler; it asserts only what is directly cited. Generalized guarantees ("all secrets are revocable") are deliberately **not** claimed, per the prefer-implementation rule.
@@ -462,11 +462,11 @@ OpenTelemetry is the Service Relationship & Telemetry Authority [`Manifest.md:L9
 
 **Selection and resolution.** `configauth.Config` holds `AuthenticatorID component.ID` with mapstructure key `authenticator` [`opentelemetry/config/configauth/configauth.go:L26-28`] **[Directly Observed]**. Three resolvers select the concrete authenticator from the configured extensions map:
 
-| Resolver | Returns | Anchor |
-|----------|---------|--------|
-| `GetServerAuthenticator` | `extensionauth.Server` | [`.../configauth.go:L35`] |
-| `GetHTTPClientAuthenticator` | `extensionauth.HTTPClient` | [`.../configauth.go:L49`] |
-| `GetGRPCClientAuthenticator` | `extensionauth.GRPCClient` | [`.../configauth.go:L62`] |
+| Resolver | Returns | Anchor | Class |
+|----------|---------|--------|-------|
+| `GetServerAuthenticator` | `extensionauth.Server` | [`opentelemetry/config/configauth/configauth.go:L35`] | Directly Observed |
+| `GetHTTPClientAuthenticator` | `extensionauth.HTTPClient` | [`opentelemetry/config/configauth/configauth.go:L49`] | Directly Observed |
+| `GetGRPCClientAuthenticator` | `extensionauth.GRPCClient` | [`opentelemetry/config/configauth/configauth.go:L62`] | Directly Observed |
 
 **Configuration contract.** The receiver-side schema exposes a single `authenticator` property, typed as a string carrying a `go.opentelemetry.io/collector/component.ID` [`opentelemetry/config/configauth/config.schema.yaml:L6-9`] **[Directly Observed]**.
 
@@ -484,14 +484,14 @@ This is the single most consequential seam: where a Kubernetes-issued identity b
 |---|-----------|-------|------------------|
 | 1 | Source domain | Kubernetes (Runtime Identity Authority) | [`Manifest.md:L3-4`] · Directly Observed |
 | 2 | Target domain | Vault (Secrets & Credentials Authority) | [`Manifest.md:L6-7`] · Directly Observed |
-| 3 | Propagated artifact | Service-account JWT read from the default token file | [`.../auth/kubernetes/kubernetes.go:L21`,`L80`] · Directly Observed |
-| 4 | What is trusted | That the JWT at the mounted path authentically represents the workload's K8s identity | [`.../auth/kubernetes/kubernetes.go:L80-87`] · Inferred |
-| 5 | Who established it | Kubernetes (projects the SA token into the pod filesystem) | [`.../helpers.go:L102`] (default path) · Inferred (projection by K8s) |
-| 6 | How it is validated | Agent reads the file and submits it as the `"jwt"` login field; Vault-side validation occurs in the Vault server's kubernetes auth backend | [`.../auth/kubernetes/kubernetes.go:L87`] · Directly Observed (submission) / Inferred (server-side verify) |
-| 7 | Validation/authorization logic | `Authenticate()` performs the login round-trip and returns a Vault token | [`.../auth/auth.go:L31`], [`.../auth/auth.go:L331`] · Directly Observed |
-| 8 | Failure conditions | Token file unreadable → read error with the path surfaced; persistent-cache type other than `kubernetes` is unsupported | [`.../helpers.go:L100-102`], [`.../helpers.go:L106-108`] · Directly Observed |
-| 9 | Resulting privileges | A Vault token, hence access to whatever secrets/engines the token's policies permit | [`.../auth/auth.go:L31`]; [`vault/builtin/logical/`] · Inferred |
-| 10 | Security implications | The SA JWT **dually** acts as login credential *and* boltdb AAD; one artifact compromise has two effects | [`.../helpers.go:L97-102`,`L146`,`L208`] · Directly Observed (paths) / Inferred (significance) |
+| 3 | Propagated artifact | Service-account JWT read from the default token file | [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L21`,`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80`] · Directly Observed |
+| 4 | What is trusted | That the JWT at the mounted path authentically represents the workload's K8s identity | [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L80-87`] · Inferred |
+| 5 | Who established it | Kubernetes (projects the SA token into the pod filesystem) | [`vault/command/agentproxyshared/helpers.go:L102`] (default path) · Inferred (projection by K8s) |
+| 6 | How it is validated | Agent reads the file and submits it as the `"jwt"` login field; Vault-side validation occurs in the Vault server's kubernetes auth backend | [`vault/command/agentproxyshared/auth/kubernetes/kubernetes.go:L87`] · Directly Observed (submission) / Inferred (server-side verify) |
+| 7 | Validation/authorization logic | `Authenticate()` performs the login round-trip and returns a Vault token | [`vault/command/agentproxyshared/auth/auth.go:L31`], [`vault/command/agentproxyshared/auth/auth.go:L331`] · Directly Observed |
+| 8 | Failure conditions | Token file unreadable → read error with the path surfaced; persistent-cache type other than `kubernetes` is unsupported | [`vault/command/agentproxyshared/helpers.go:L100-102`], [`vault/command/agentproxyshared/helpers.go:L106-108`] · Directly Observed |
+| 9 | Resulting privileges | A Vault token, hence access to whatever secrets/engines the token's policies permit | [`vault/command/agentproxyshared/auth/auth.go:L31`]; [`vault/builtin/logical/`] · Inferred |
+| 10 | Security implications | The SA JWT **dually** acts as login credential *and* boltdb AAD; one artifact compromise has two effects | [`vault/command/agentproxyshared/helpers.go:L97-102`,`vault/command/agentproxyshared/helpers.go:L146`,`vault/command/agentproxyshared/helpers.go:L208`] · Directly Observed (paths) / Inferred (significance) |
 | 11 | Audit visibility | Vault-side login is auditable via the Vault audit broker; the **agent-side file read and AAD use are not Vault audit events** | [`vault/audit/broker.go:L255`] · Inferred (blind spot) |
 
 **Liability analysis (S1).**
@@ -499,27 +499,27 @@ This is the single most consequential seam: where a Kubernetes-issued identity b
 | Aspect | Finding |
 |--------|---------|
 | Upstream assertion trusted | The mounted SA JWT authentically names the workload identity **[Inferred]** |
-| Downstream authority granted | A Vault token and the secret access its policies allow [`.../auth/auth.go:L31`] **[Inferred]** |
-| Dependent systems | Every Vault secret engine reachable by that token's policy; any boltdb cache bound by the same token as AAD [`.../helpers.go:L146`] |
+| Downstream authority granted | A Vault token and the secret access its policies allow [`vault/command/agentproxyshared/auth/auth.go:L31`] **[Inferred]** |
+| Dependent systems | Every Vault secret engine reachable by that token's policy; any boltdb cache bound by the same token as AAD [`vault/command/agentproxyshared/helpers.go:L146`] |
 | Compromise cascade | Forged/leaked SA JWT → Vault login as that identity → Vault token → dynamic secrets → privileged resource; *and* decrypt the agent's persistent cache (§4.10) **[Inferred]** |
-| Accountable system | Vault (BUSL-1.1) owns the consumption decision; Kubernetes (Apache-2.0) owns issuance — accountability crosses a license boundary [`.../helpers.go:L1-2`], [`.../serviceaccount/util.go:L1-15`] **[Inferred]** |
+| Accountable system | Vault (BUSL-1.1) owns the consumption decision; Kubernetes (Apache-2.0) owns issuance — accountability crosses a license boundary [`vault/command/agentproxyshared/helpers.go:L1-2`], [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L1-15`] **[Inferred]** |
 | Inherited downstream risk | Any service relying on secrets minted under that token inherits the forged identity's authority **[Inferred]** |
 
 #### Seam S2 — Workload → Identity (Kubernetes SA & node identity provenance)
 
 | # | Attribute | Value | Evidence / Class |
 |---|-----------|-------|------------------|
-| 1 | Source domain | Workload (pod) / node | [`.../serviceaccount/util.go:L29`] · Directly Observed |
-| 2 | Target domain | Kubernetes identity layer | [`.../serviceaccount/util.go:L55-56`] · Directly Observed |
-| 3 | Propagated artifact | Username/group strings: `system:serviceaccount:<ns>:<name>`, `system:node:<name>`, groups `system:serviceaccounts[:ns]`, `system:nodes` | [`.../serviceaccount/util.go:L29-32`,`L55-56`], [`.../user/user.go:L72`] · Directly Observed |
-| 4 | What is trusted | The prefix/group encoding faithfully classifies the identity | [`.../nodeidentifier/default.go:L42-64`] · Directly Observed |
-| 5 | Who established it | Kubernetes (`MakeUsername`, group constants) | [`.../serviceaccount/util.go:L55-56`] · Directly Observed |
-| 6 | How it is validated | Node identity requires both group `system:nodes` and name prefix `system:node:` | [`.../nodeidentifier/default.go:L49-64`] · Directly Observed |
-| 7 | Validation/authorization logic | `NodeIdentity(u)` membership + prefix test; SA username via `MakeUsername` | [`.../nodeidentifier/default.go:L42`], [`.../serviceaccount/util.go:L55-56`] · Directly Observed |
-| 8 | Failure conditions | Name without group, or group without name → `isNode=false` | [`.../nodeidentifier/default.go:L49-63`] · Directly Observed |
-| 9 | Resulting privileges | A recognized identity eligible for RBAC evaluation (S3) | [`.../rbac/rbac.go:L78`] · Inferred |
-| 10 | Security implications | Identity class is string-encoded; any component that can set these strings can assert the class | [`.../serviceaccount/util.go:L29-32`] · Inferred |
-| 11 | Audit visibility | K8s embeds provenance keys: `issued-credential-id`, `pod-name`, `pod-uid`, `node-name`, `node-uid` | [`.../serviceaccount/util.go:L38-50`] · Directly Observed |
+| 1 | Source domain | Workload (pod) / node | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29`] · Directly Observed |
+| 2 | Target domain | Kubernetes identity layer | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`] · Directly Observed |
+| 3 | Propagated artifact | Username/group strings: `system:serviceaccount:<ns>:<name>`, `system:node:<name>`, groups `system:serviceaccounts[:ns]`, `system:nodes` | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-32`,`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`], [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/user/user.go:L72`] · Directly Observed |
+| 4 | What is trusted | The prefix/group encoding faithfully classifies the identity | [`kubernetes/pkg/auth/nodeidentifier/default.go:L42-64`] · Directly Observed |
+| 5 | Who established it | Kubernetes (`MakeUsername`, group constants) | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`] · Directly Observed |
+| 6 | How it is validated | Node identity requires both group `system:nodes` and name prefix `system:node:` | [`kubernetes/pkg/auth/nodeidentifier/default.go:L49-64`] · Directly Observed |
+| 7 | Validation/authorization logic | `NodeIdentity(u)` membership + prefix test; SA username via `MakeUsername` | [`kubernetes/pkg/auth/nodeidentifier/default.go:L42`], [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`] · Directly Observed |
+| 8 | Failure conditions | Name without group, or group without name → `isNode=false` | [`kubernetes/pkg/auth/nodeidentifier/default.go:L49-63`] · Directly Observed |
+| 9 | Resulting privileges | A recognized identity eligible for RBAC evaluation (S3) | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78`] · Inferred |
+| 10 | Security implications | Identity class is string-encoded; any component that can set these strings can assert the class | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L29-32`] · Inferred |
+| 11 | Audit visibility | K8s embeds provenance keys: `issued-credential-id`, `pod-name`, `pod-uid`, `node-name`, `node-uid` | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38-50`] · Directly Observed |
 
 **Liability analysis (S2).**
 
@@ -529,24 +529,24 @@ This is the single most consequential seam: where a Kubernetes-issued identity b
 | Downstream authority granted | Eligibility for RBAC-granted actions (S3) and, in the mesh, for Vault login (S1) **[Inferred]** |
 | Dependent systems | Kubernetes RBAC; Vault (via S1); any audit consumer reading the provenance keys |
 | Compromise cascade | A forged identity string propagates into both RBAC decisions and Vault login **[Inferred]** |
-| Accountable system | Kubernetes owns identity establishment [`.../serviceaccount/util.go:L55-56`] **[Directly Observed]** |
+| Accountable system | Kubernetes owns identity establishment [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L55-56`] **[Directly Observed]** |
 | Inherited downstream risk | Vault and RBAC both inherit the trust placed in the identity encoding **[Inferred]** |
 
 #### Seam S3 — Identity → Authorization (Kubernetes RBAC)
 
 | # | Attribute | Value | Evidence / Class |
 |---|-----------|-------|------------------|
-| 1 | Source domain | Kubernetes identity layer | [`.../rbac/rbac.go:L81`] · Directly Observed |
-| 2 | Target domain | Kubernetes authorization (RBAC) | [`.../rbac/rbac.go:L78`] · Directly Observed |
-| 3 | Propagated artifact | `user.Info` (name, groups) + request attributes | [`.../rbac/rbac.go:L81`] · Directly Observed |
-| 4 | What is trusted | The authenticated identity and namespace presented to the authorizer | [`.../rbac/rbac.go:L81`] · Directly Observed |
-| 5 | Who established it | Authentication layer (S2) supplies `user.Info` | [`.../rbac/rbac.go:L81`] · Inferred |
-| 6 | How it is validated | `VisitRulesFor(...)` enumerates applicable rules; `RuleAllows(...)` tests each | [`.../rbac/rbac.go:L81`,`L191`] · Directly Observed |
-| 7 | Validation/authorization logic | Allow-on-match → `DecisionAllow`, reason `"RBAC: allowed by <source>"` | [`.../rbac/rbac.go:L69`,`L83`] · Directly Observed |
-| 8 | Failure conditions | No matching allow rule → no allow decision returned | [`.../rbac/rbac.go:L83`] · Directly Observed |
-| 9 | Resulting privileges | The specific verb/resource permitted by the matched rule | [`.../rbac/rbac.go:L191`] · Inferred |
+| 1 | Source domain | Kubernetes identity layer | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L81`] · Directly Observed |
+| 2 | Target domain | Kubernetes authorization (RBAC) | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78`] · Directly Observed |
+| 3 | Propagated artifact | `user.Info` (name, groups) + request attributes | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L81`] · Directly Observed |
+| 4 | What is trusted | The authenticated identity and namespace presented to the authorizer | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L81`] · Directly Observed |
+| 5 | Who established it | Authentication layer (S2) supplies `user.Info` | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L81`] · Inferred |
+| 6 | How it is validated | `VisitRulesFor(...)` enumerates applicable rules; `RuleAllows(...)` tests each | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L81`,`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L191`] · Directly Observed |
+| 7 | Validation/authorization logic | Allow-on-match → `DecisionAllow`, reason `"RBAC: allowed by <source>"` | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L69`,`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L83`] · Directly Observed |
+| 8 | Failure conditions | No matching allow rule → no allow decision returned | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L83`] · Directly Observed |
+| 9 | Resulting privileges | The specific verb/resource permitted by the matched rule | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L191`] · Inferred |
 | 10 | Security implications | Default bindings grant standing privilege absent explicit per-cluster review | [`kubernetes/cluster/addons/rbac/`] · Directly Observed |
-| 11 | Audit visibility | The allow reason string identifies the granting source | [`.../rbac/rbac.go:L69`] · Directly Observed |
+| 11 | Audit visibility | The allow reason string identifies the granting source | [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L69`] · Directly Observed |
 
 **Default-privilege catalog (S3).** The shipped bindings are `cluster-autoscaler`, `cluster-loadbalancing`, `kubelet-api-auth`, `kubelet-cert-rotation`, `legacy-kubelet-user`, `legacy-kubelet-user-disable` [`kubernetes/cluster/addons/rbac/`] **[Directly Observed]**. The presence of `legacy-kubelet-user` alongside `legacy-kubelet-user-disable` indicates a legacy grant that exists unless explicitly disabled — implicit standing authority **[Inferred]**.
 
@@ -555,54 +555,54 @@ This is the single most consequential seam: where a Kubernetes-issued identity b
 | Aspect | Finding |
 |--------|---------|
 | Upstream assertion trusted | The `user.Info` handed to the authorizer is authentic **[Inferred]** |
-| Downstream authority granted | The matched rule's verbs/resources [`.../rbac/rbac.go:L191`] **[Inferred]** |
+| Downstream authority granted | The matched rule's verbs/resources [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L191`] **[Inferred]** |
 | Dependent systems | The Kubernetes API server and every controller relying on RBAC outcomes |
 | Compromise cascade | A forged identity that matches a default binding gains its standing privilege **[Inferred]** |
-| Accountable system | Kubernetes RBAC authorizer [`.../rbac/rbac.go:L78`] **[Directly Observed]** |
+| Accountable system | Kubernetes RBAC authorizer [`kubernetes/plugin/pkg/auth/authorizer/rbac/rbac.go:L78`] **[Directly Observed]** |
 | Inherited downstream risk | Any workload authorized by a default binding inherits that privilege without explicit grant **[Inferred]** |
 
 #### Seam S4 — Service ↔ Downstream Service (OpenTelemetry authenticated telemetry)
 
 | # | Attribute | Value | Evidence / Class |
 |---|-----------|-------|------------------|
-| 1 | Source domain | OpenTelemetry service (client/exporter) | [`.../extensionauth/doc.go:L4-6`] · Directly Observed |
-| 2 | Target domain | OpenTelemetry service (server/receiver) | [`.../extensionauth/doc.go:L4-6`] · Directly Observed |
-| 3 | Propagated artifact | Telemetry payload + authentication material added by the authenticator | [`.../extensionauth/doc.go:L4-6`] · Directly Observed |
-| 4 | What is trusted | The configured authenticator extension correctly authenticates the peer | [`.../configauth.go:L35`,`L49`,`L62`] · Directly Observed |
-| 5 | Who established it | Operator configuration selects the extension by `component.ID` | [`.../configauth.go:L28`], [`.../config.schema.yaml:L6-9`] · Directly Observed |
-| 6 | How it is validated | Receiver resolves a server authenticator; exporter resolves a client authenticator | [`.../configauth.go:L35`,`L49`,`L62`] · Directly Observed |
-| 7 | Validation/authorization logic | Extension lookup by ID; type-assert to Server/HTTPClient/GRPCClient | [`.../configauth.go:L36-69`] · Directly Observed |
-| 8 | Failure conditions | `errAuthenticatorNotFound` (ID absent); `errNotServer`/`errNotHTTPClient`/`errNotGRPCClient` (type mismatch) | [`.../configauth.go:L20-22`,`L40`,`L43`,`L54`,`L67`] · Directly Observed |
-| 9 | Resulting privileges | Accepted telemetry is ingested / forwarded along the pipeline | [`.../configauth.go:L35`] · Inferred |
-| 10 | Security implications | Authentication is optional/by-configuration; an unset `authenticator` ID means no authenticator is resolved | [`.../config.schema.yaml:L6-9`] · Inferred |
-| 11 | Audit visibility | No dedicated audit log is evidenced in `configauth`; failures surface as resolution errors only | [`.../configauth.go:L43`] · Inferred (blind spot) |
+| 1 | Source domain | OpenTelemetry service (client/exporter) | [`opentelemetry/extension/extensionauth/doc.go:L4-6`] · Directly Observed |
+| 2 | Target domain | OpenTelemetry service (server/receiver) | [`opentelemetry/extension/extensionauth/doc.go:L4-6`] · Directly Observed |
+| 3 | Propagated artifact | Telemetry payload + authentication material added by the authenticator | [`opentelemetry/extension/extensionauth/doc.go:L4-6`] · Directly Observed |
+| 4 | What is trusted | The configured authenticator extension correctly authenticates the peer | [`opentelemetry/config/configauth/configauth.go:L35`,`opentelemetry/config/configauth/configauth.go:L49`,`opentelemetry/config/configauth/configauth.go:L62`] · Directly Observed |
+| 5 | Who established it | Operator configuration selects the extension by `component.ID` | [`opentelemetry/config/configauth/configauth.go:L28`], [`opentelemetry/config/configauth/config.schema.yaml:L6-9`] · Directly Observed |
+| 6 | How it is validated | Receiver resolves a server authenticator; exporter resolves a client authenticator | [`opentelemetry/config/configauth/configauth.go:L35`,`opentelemetry/config/configauth/configauth.go:L49`,`opentelemetry/config/configauth/configauth.go:L62`] · Directly Observed |
+| 7 | Validation/authorization logic | Extension lookup by ID; type-assert to Server/HTTPClient/GRPCClient | [`opentelemetry/config/configauth/configauth.go:L36-69`] · Directly Observed |
+| 8 | Failure conditions | `errAuthenticatorNotFound` (ID absent); `errNotServer`/`errNotHTTPClient`/`errNotGRPCClient` (type mismatch) | [`opentelemetry/config/configauth/configauth.go:L20-22`,`opentelemetry/config/configauth/configauth.go:L40`,`opentelemetry/config/configauth/configauth.go:L43`,`opentelemetry/config/configauth/configauth.go:L54`,`opentelemetry/config/configauth/configauth.go:L67`] · Directly Observed |
+| 9 | Resulting privileges | Accepted telemetry is ingested / forwarded along the pipeline | [`opentelemetry/config/configauth/configauth.go:L35`] · Inferred |
+| 10 | Security implications | Authentication is optional/by-configuration; an unset `authenticator` ID means no authenticator is resolved | [`opentelemetry/config/configauth/config.schema.yaml:L6-9`] · Inferred |
+| 11 | Audit visibility | No dedicated audit log is evidenced in `configauth`; failures surface as resolution errors only | [`opentelemetry/config/configauth/configauth.go:L43`] · Inferred (blind spot) |
 
 **Liability analysis (S4).**
 
 | Aspect | Finding |
 |--------|---------|
 | Upstream assertion trusted | The peer is who the authenticator says it is **[Inferred]** |
-| Downstream authority granted | Telemetry is accepted and forwarded downstream [`.../configauth.go:L62`] **[Inferred]** |
+| Downstream authority granted | Telemetry is accepted and forwarded downstream [`opentelemetry/config/configauth/configauth.go:L62`] **[Inferred]** |
 | Dependent systems | Downstream collectors/backends receiving forwarded telemetry |
 | Compromise cascade | A mis-/unconfigured authenticator (absent ID) admits unauthenticated telemetry that propagates downstream **[Inferred]** |
-| Accountable system | OpenTelemetry Collector configuration and the chosen extension [`.../configauth.go:L26-69`] **[Directly Observed]** |
+| Accountable system | OpenTelemetry Collector configuration and the chosen extension [`opentelemetry/config/configauth/configauth.go:L26-69`] **[Directly Observed]** |
 | Inherited downstream risk | Downstream consumers inherit trust in telemetry authenticated (or not) upstream **[Inferred]** |
 
 #### Seam S5 — Vault → Kubernetes (operational state surfacing)
 
 | # | Attribute | Value | Evidence / Class |
 |---|-----------|-------|------------------|
-| 1 | Source domain | Vault | [`.../service_registration.go:L19-26`] · Directly Observed |
-| 2 | Target domain | Kubernetes (pod metadata) | [`.../service_registration.go:L26`] · Directly Observed |
-| 3 | Propagated artifact | Pod labels: `vault-version`, `vault-active`, `vault-sealed`, `vault-perf-standby`, `vault-initialized` | [`.../service_registration.go:L19-23`] · Directly Observed |
-| 4 | What is trusted | Vault's self-reported operational state | [`.../service_registration.go:L73-103`] · Directly Observed |
-| 5 | Who established it | Vault (the PATCHing party) | [`.../service_registration.go:L73`] · Directly Observed |
-| 6 | How it is validated | PATCH to `/metadata/labels/<label>`; retried by the retry handler | [`.../service_registration.go:L76`], [`.../retry_handler.go:L48-224`] · Directly Observed |
-| 7 | Validation/authorization logic | Requires Kubernetes RBAC permission to patch pod metadata (server-side) | [`.../service_registration.go:L73-103`] · Inferred |
-| 8 | Failure conditions | Patch failure → retried; best-effort surfacing | [`.../retry_handler.go:L110-224`] · Directly Observed |
-| 9 | Resulting privileges | Consumers that read the labels can make scheduling/routing decisions on Vault state | [`.../service_registration.go:L19-23`] · Inferred |
-| 10 | Security implications | Labels are not authenticated content; a reader trusts that the label reflects true Vault state | [`.../service_registration.go:L73-103`] · Inferred |
-| 11 | Audit visibility | Label changes are visible in Kubernetes object history; not a Vault audit event | [`.../service_registration.go:L73`] · Inferred |
+| 1 | Source domain | Vault | [`vault/serviceregistration/kubernetes/service_registration.go:L19-26`] · Directly Observed |
+| 2 | Target domain | Kubernetes (pod metadata) | [`vault/serviceregistration/kubernetes/service_registration.go:L26`] · Directly Observed |
+| 3 | Propagated artifact | Pod labels: `vault-version`, `vault-active`, `vault-sealed`, `vault-perf-standby`, `vault-initialized` | [`vault/serviceregistration/kubernetes/service_registration.go:L19-23`] · Directly Observed |
+| 4 | What is trusted | Vault's self-reported operational state | [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] · Directly Observed |
+| 5 | Who established it | Vault (the PATCHing party) | [`vault/serviceregistration/kubernetes/service_registration.go:L73`] · Directly Observed |
+| 6 | How it is validated | PATCH to `/metadata/labels/<label>`; retried by the retry handler | [`vault/serviceregistration/kubernetes/service_registration.go:L76`], [`vault/serviceregistration/kubernetes/retry_handler.go:L48-224`] · Directly Observed |
+| 7 | Validation/authorization logic | Requires Kubernetes RBAC permission to patch pod metadata (server-side) | [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] · Inferred |
+| 8 | Failure conditions | Patch failure → retried; best-effort surfacing | [`vault/serviceregistration/kubernetes/retry_handler.go:L110-224`] · Directly Observed |
+| 9 | Resulting privileges | Consumers that read the labels can make scheduling/routing decisions on Vault state | [`vault/serviceregistration/kubernetes/service_registration.go:L19-23`] · Inferred |
+| 10 | Security implications | Labels are not authenticated content; a reader trusts that the label reflects true Vault state | [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] · Inferred |
+| 11 | Audit visibility | Label changes are visible in Kubernetes object history; not a Vault audit event | [`vault/serviceregistration/kubernetes/service_registration.go:L73`] · Inferred |
 
 **Liability analysis (S5).**
 
@@ -612,34 +612,34 @@ This is the single most consequential seam: where a Kubernetes-issued identity b
 | Downstream authority granted | Label readers act on the asserted state (e.g., route to active) **[Inferred]** |
 | Dependent systems | Any Kubernetes consumer (service, controller) keying off these labels |
 | Compromise cascade | A stale/forged label misdirects consumers about Vault's sealed/active state **[Inferred]** |
-| Accountable system | Vault service registration writes the labels [`.../service_registration.go:L73-103`] **[Directly Observed]** |
+| Accountable system | Vault service registration writes the labels [`vault/serviceregistration/kubernetes/service_registration.go:L73-103`] **[Directly Observed]** |
 | Inherited downstream risk | Consumers inherit the risk of acting on unauthenticated state labels **[Inferred]** |
 
 #### 6.4.1 Audit Blind Spots (high-value findings)
 
-- **Agent-side token handling is outside Vault audit.** The Vault audit broker logs request/response events at the Vault server [`vault/audit/broker.go:L255`,`L322`] **[Directly Observed]**. The Agent's *reads* of the SA token file (for login and for AAD) are local file operations, not Vault server requests, so they do not appear in the Vault audit log **[Inferred]**.
-- **The dual-use of the SA token is invisible to either domain's audit.** Kubernetes records identity provenance at issuance [`.../serviceaccount/util.go:L38-50`] **[Directly Observed]**, but neither Kubernetes nor Vault records that the *same* token was reused as boltdb AAD **[Inferred]**.
-- **OpenTelemetry `configauth` evidences no audit sink.** Authentication failures surface as resolution errors [`.../configauth.go:L43`] **[Directly Observed]**; no dedicated audit trail for accept/reject is evidenced in this package **[Inferred]**.
+- **Agent-side token handling is outside Vault audit.** The Vault audit broker logs request/response events at the Vault server [`vault/audit/broker.go:L255`,`vault/audit/broker.go:L322`] **[Directly Observed]**. The Agent's *reads* of the SA token file (for login and for AAD) are local file operations, not Vault server requests, so they do not appear in the Vault audit log **[Inferred]**.
+- **The dual-use of the SA token is invisible to either domain's audit.** Kubernetes records identity provenance at issuance [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38-50`] **[Directly Observed]**, but neither Kubernetes nor Vault records that the *same* token was reused as boltdb AAD **[Inferred]**.
+- **OpenTelemetry `configauth` evidences no audit sink.** Authentication failures surface as resolution errors [`opentelemetry/config/configauth/configauth.go:L43`] **[Directly Observed]**; no dedicated audit trail for accept/reject is evidenced in this package **[Inferred]**.
 
 #### 6.4.2 Documentation-vs-Implementation Contradictions (high-value findings)
 
 - **Authority-role naming overstates the manifest.** The manifest's literal text is "Trust Domain: Runtime Identity / Secrets & Credentials / Service Relationships" [`Manifest.md:L3-10`] **[Directly Observed]**. The richer "…Authority" / "…& Telemetry" role names used in analysis (and in the governing plan) are not present verbatim in the manifest; they are an analytical extension **[Inferred]**. Per prefer-implementation, the manifest's literal wording is authoritative for what the corpus *states*.
 - **The hypothesis asserts a chain the corpus does not wire.** The eight-link chain is presented as fact-shaped prose [`docs/docs/TRUST_PROPAGATION_HYPOTHESIS.md:L3-10`] **[Documented Assumption]**, but the corpus contains no artifact deploying the three domains together; the *Human* and *Pipeline* links have no runtime binding (§4.2) **[Inferred]**. Documentation implies an end-to-end runtime path stronger than the implementation evidences.
-- **Telemetry authentication can be absent by configuration.** The schema treats `authenticator` as an optional property [`.../config.schema.yaml:L6-9`], and the config field is `omitempty` [`.../configauth.go:L28`] **[Directly Observed]**; a deployment may therefore run with no authenticator resolved, contradicting any assumption that telemetry is authenticated by default **[Inferred]**.
+- **Telemetry authentication can be absent by configuration.** The schema treats `authenticator` as an optional property [`opentelemetry/config/configauth/config.schema.yaml:L6-9`], and the config field is `omitempty` [`opentelemetry/config/configauth/configauth.go:L28`] **[Directly Observed]**; a deployment may therefore run with no authenticator resolved, contradicting any assumption that telemetry is authenticated by default **[Inferred]**.
 
 ### 6.5 Monitoring and Audit
 
 **Vault audit pipeline.** Audit events flow through a broker that logs both the request and the response of an operation: `LogRequest(ctx, in *logical.LogInput)` [`vault/audit/broker.go:L255`] and `LogResponse(ctx, in *logical.LogInput)` [`vault/audit/broker.go:L322`] **[Directly Observed]**. Backends are registered/deregistered on the broker (`Register` [`vault/audit/broker.go:L200`], `Deregister` [`vault/audit/broker.go:L226`]) and events are fanned out to sinks **[Directly Observed]**. Three transport sinks exist: file [`vault/audit/backend_file.go`], socket [`vault/audit/backend_socket.go`], and syslog [`vault/audit/backend_syslog.go`] **[Directly Observed]**. Formatting and filtering are handled by `entry_formatter.go` and `entry_filter.go` [`vault/audit/`] **[Directly Observed]**.
 
-**Kubernetes audit provenance.** Identity establishment embeds audit provenance directly: the issued-credential identifier and pod/node coordinates are carried as well-known keys — `authentication.kubernetes.io/issued-credential-id` [`.../serviceaccount/util.go:L38`], `.../pod-name` [`.../serviceaccount/util.go:L41`], `.../pod-uid` [`.../serviceaccount/util.go:L44`], `.../node-name` [`.../serviceaccount/util.go:L47`], `.../node-uid` [`.../serviceaccount/util.go:L50`] **[Directly Observed]**. This binds an issued service-account credential to the workload and node that received it.
+**Kubernetes audit provenance.** Identity establishment embeds audit provenance directly: the issued-credential identifier and pod/node coordinates are carried as well-known keys — `authentication.kubernetes.io/issued-credential-id` [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38`], `.../pod-name` [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L41`], `.../pod-uid` [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L44`], `.../node-name` [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L47`], `.../node-uid` [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L50`] **[Directly Observed]**. This binds an issued service-account credential to the workload and node that received it.
 
-**Combined visibility assessment [Inferred].** Kubernetes captures *who/where* an identity was issued; Vault captures *what* that identity (once exchanged for a token) did against the Vault API. The seam between them — the agent-side file read and the boltdb AAD reuse — is captured by **neither** (§6.4.1). For the mesh as a whole, this is the principal audit blind spot.
+**Combined visibility assessment [Inferred].** Kubernetes captures *who/where* an identity was issued; Vault *can* capture *what* that identity (once exchanged for a token) did against the Vault API — but only **when at least one audit backend is registered**. The audit broker short-circuits and returns without logging on its no-backend path for both `LogRequest` [`vault/audit/broker.go:L253-261`] and `LogResponse` [`vault/audit/broker.go:L320-328`] **[Directly Observed]**; with no backend configured, even the Vault-side request/response activity is not captured — an additional audit blind spot / failure condition. The seam between the two domains — the agent-side file read and the boltdb AAD reuse — is captured by **neither** (§6.4.1). For the mesh as a whole, the unmonitored agent-side seam (compounded by the no-backend case) is the principal audit blind spot.
 
-| Surface | Captures | Does not capture | Anchor |
-|---------|----------|------------------|--------|
-| K8s identity provenance | issued-credential-id, pod/node coordinates | downstream secret use | [`.../serviceaccount/util.go:L38-50`] |
-| Vault audit broker | request/response at Vault server | agent-side token file reads, AAD reuse | [`vault/audit/broker.go:L255`,`L322`] |
-| OTel `configauth` | resolution errors | accept/reject audit trail | [`.../configauth.go:L43`] |
+| Surface | Captures | Does not capture | Anchor | Class |
+|---------|----------|------------------|--------|-------|
+| K8s identity provenance | issued-credential-id, pod/node coordinates | downstream secret use | [`kubernetes/staging/src/k8s.io/apiserver/pkg/authentication/serviceaccount/util.go:L38-50`] | Directly Observed |
+| Vault audit broker | request/response at Vault server (only when ≥1 backend is registered) | agent-side token file reads, AAD reuse; any activity when no audit backend is registered | [`vault/audit/broker.go:L255`,`vault/audit/broker.go:L322`,`vault/audit/broker.go:L253-261`,`vault/audit/broker.go:L320-328`] | Directly Observed |
+| OTel `configauth` | resolution errors | accept/reject audit trail | [`opentelemetry/config/configauth/configauth.go:L43`] | Directly Observed |
 
 ---
 
@@ -679,7 +679,7 @@ A container build exists for Vault: `vault/Dockerfile` is present in the corpus 
 
 ### 8.3 CI / CD (build-time, not runtime)
 
-GitHub Actions workflows are present for two domains: Vault (`vault/.github/workflows/`, 33 workflow files) and OpenTelemetry (`opentelemetry/.github/workflows/`, 38 workflow files) **[Directly Observed]**. The Kubernetes submodule has **no** `.github/workflows/` entries in the corpus (0 files) **[Directly Observed]**; Kubernetes upstream uses a different CI system (Prow), which is **not** present in this corpus and is therefore not asserted as evidence **[Inferred]**. These are build pipelines; binding them to the runtime trust chain's *Pipeline* link is a Documented Assumption (§4.2).
+GitHub Actions workflows are present for two domains: Vault (`vault/.github/workflows/`, 33 workflow files) and OpenTelemetry (`opentelemetry/.github/workflows/`, 36 workflow files plus two workflow-support directories — `scripts/` and `utils/` — for 38 directory entries total) **[Directly Observed]**. The Kubernetes submodule has **no** `.github/workflows/` entries in the corpus (0 files) **[Directly Observed]**; Kubernetes upstream uses a different CI system (Prow), which is **not** present in this corpus and is therefore not asserted as evidence **[Inferred]**. These are build pipelines; binding them to the runtime trust chain's *Pipeline* link is a Documented Assumption (§4.2).
 
 ### 8.4 Image Provenance (cosign)
 
@@ -690,7 +690,7 @@ Supply-chain signing is evidenced in OpenTelemetry: a workflow installs cosign v
 | Concern | Evidence | What it does NOT imply |
 |---------|----------|------------------------|
 | Container build | [`vault/Dockerfile`] | A combined/multi-domain image |
-| CI workflows | `vault/.github/workflows/` (33), `opentelemetry/.github/workflows/` (38) | A shared pipeline across domains |
+| CI workflows | `vault/.github/workflows/` (33 files), `opentelemetry/.github/workflows/` (36 files + 2 support dirs `scripts/`, `utils/`) | A shared pipeline across domains |
 | Image signing | [`opentelemetry/.github/workflows/builder-snapshot.yaml:L39`] | Cross-domain attestation |
 | Deployment wiring | `vault/terraform/README.md` (removed) | Any active IaC integration |
 
@@ -715,12 +715,12 @@ Supply-chain signing is evidenced in OpenTelemetry: a workflow installs cosign v
 ### 9.3 Glossary
 
 - **Trust mesh** — the analytical treatment of Kubernetes, Vault, and OpenTelemetry as a single, interconnected trust system rather than three independent products. The composite is an analytical construct, not a deployed platform (Conventions; §1.1).
-- **Trust domain** — a component that can independently establish, validate, grant, deny, propagate, or rely upon trust. The three domains and their authority roles are defined in §1.2 from [`Manifest.md:L3-10`].
+- **Trust domain** — a component that can independently establish, validate, grant, deny, propagate, or rely upon trust. The three domain designations are defined in §1.2 from [`Manifest.md:L3-10`] **[Directly Observed]**; the active "Authority" role names assigned to them are an analytical extension **[Inferred]** (§9.2, §6.4.2).
 - **Trust seam** — a point where one domain trusts an assertion made under the authority of another domain (a cross-domain interaction). Each seam is documented in §6.4 with eleven attributes.
 - **Liability propagation** — the chain of consequences when an upstream assertion at a seam is trusted: the downstream authority granted, the dependent systems, the compromise cascade if the assertion is forged, the accountable system, and the inherited downstream risk (§6.4, per-seam liability tables).
 - **Authority role** — the active role (e.g., "Runtime Identity Authority") an analysis assigns a domain, extending the manifest's literal "Trust Domain" designation (§1.2; §9.2).
-- **AAD (additional authenticated data)** — data bound to an authenticated-encryption operation; in this corpus, the Kubernetes SA token is used as AAD for the Vault Agent's boltdb persistent cache [`vault/command/agentproxyshared/helpers.go:L146`].
-- **Auto-auth** — the Vault Agent mechanism that automatically authenticates to Vault using a configured method, defined by the `AuthMethod` interface [`vault/command/agentproxyshared/auth/auth.go:L28-34`].
+- **AAD (additional authenticated data)** — data bound to an authenticated-encryption operation; in this corpus, the Kubernetes SA token is used as AAD for the Vault Agent's boltdb persistent cache [`vault/command/agentproxyshared/helpers.go:L146`] **[Directly Observed]**.
+- **Auto-auth** — the Vault Agent mechanism that automatically authenticates to Vault using a configured method, defined by the `AuthMethod` interface [`vault/command/agentproxyshared/auth/auth.go:L28-34`] **[Directly Observed]**.
 
 ### 9.4 Acronyms
 
