@@ -758,4 +758,3 @@ All references are corpus-relative; line locators are verified against the corpu
 ---
 
 *End of specification (§1–§9). Authored exclusively from corpus evidence; every system claim is cited and evidence-classified per the Conventions.*
-
